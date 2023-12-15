@@ -3,11 +3,11 @@ const User = require('../models/User')
 const { body, validationResult } = require('express-validator');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
+var jwt = require('jsonwebtoken');
+var fetchuser = require('../middleware/fetchuser');
 const JWT_SECRET = '$noopDawg';
 
-// CREATE a user using POST "/api/auth" doesn't require AUTH 
+// ROUTE 1: CREATE a user using POST "/api/auth" doesn't require AUTH 
 router.post('/',
 [
     body('name', 'Enter a valid name').isLength({ min: 3 }),
@@ -52,7 +52,7 @@ router.post('/',
 
 })
 
-// LOGIN with USER, requires authentication.
+// ROUTE 2: LOGIN with USER
 router.post('/login', [ 
     body('email', 'Enter a valid email').isEmail(),  //checks email format
     body('password', 'Password cannot be blank').exists(),  //checks for empty vals
@@ -92,4 +92,18 @@ router.post('/login', [
   
   })
 
-module.exports = router
+  // ROUTE 3: Logged in details
+
+  router.post('/getuser', fetchuser, async (req, res) =>{
+    try {
+        var userID = req.user.id
+        const user = await User.findById(userID).select("-password")
+        res.send(user)
+        
+      } catch (error) {
+            console.error(error.message)
+            console.log("Internal server error")
+      }
+  })
+
+module.exports = router;
